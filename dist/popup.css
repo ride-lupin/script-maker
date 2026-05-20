@@ -21,6 +21,28 @@ body {
   padding: 16px;
 }
 
+.current-time {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d4dbe3;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.current-time span {
+  color: #596673;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.current-time strong {
+  color: #111827;
+  font-size: 18px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
 .form {
   display: grid;
   gap: 12px;
@@ -39,43 +61,9 @@ body {
   gap: 8px;
 }
 
-.mode-field {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  border: 0;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.mode-field legend {
-  margin-bottom: 2px;
-  padding: 0;
-}
-
-.mode-field label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  font-weight: 500;
-}
-
-.mode-field input {
-  width: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-}
-
 .mode-panel {
   display: grid;
   gap: 12px;
-}
-
-.mode-panel.hidden {
-  display: none;
 }
 
 input {

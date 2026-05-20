@@ -8,6 +8,11 @@
   </head>
   <body>
     <main class="popup">
+      <section class="current-time" aria-live="polite">
+        <span id="current-time-label">현재 시각</span>
+        <strong id="current-time-value">확인 중...</strong>
+      </section>
+
       <form id="schedule-form" class="form">
         <div class="datetime-fields">
           <label class="field">
@@ -21,31 +26,7 @@
           </label>
         </div>
 
-        <fieldset class="mode-field">
-          <legend>버튼 선택 방식</legend>
-          <label>
-            <input type="radio" name="targetMode" value="text" checked>
-            <span>버튼명과 순번</span>
-          </label>
-          <label>
-            <input type="radio" name="targetMode" value="selected">
-            <span>브라우저에서 선택</span>
-          </label>
-        </fieldset>
-
-        <section id="text-mode-fields" class="mode-panel">
-          <label class="field">
-            <span>버튼명</span>
-            <input id="button-text" name="buttonText" type="text" autocomplete="off">
-          </label>
-
-          <label class="field">
-            <span>버튼 순번</span>
-            <input id="target-index" name="targetIndex" type="number" min="1" step="1" value="1">
-          </label>
-        </section>
-
-        <section id="selected-mode-fields" class="mode-panel hidden">
+        <section class="mode-panel">
           <button id="select-button" type="button" class="secondary wide">브라우저에서 선택</button>
           <p id="selected-target" class="selected-target">선택된 버튼 없음</p>
         </section>
