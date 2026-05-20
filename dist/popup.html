@@ -21,15 +21,34 @@
           </label>
         </div>
 
-        <label class="field">
-          <span>버튼명</span>
-          <input id="button-text" name="buttonText" type="text" autocomplete="off" required>
-        </label>
+        <fieldset class="mode-field">
+          <legend>버튼 선택 방식</legend>
+          <label>
+            <input type="radio" name="targetMode" value="text" checked>
+            <span>버튼명과 순번</span>
+          </label>
+          <label>
+            <input type="radio" name="targetMode" value="selected">
+            <span>브라우저에서 선택</span>
+          </label>
+        </fieldset>
 
-        <label class="field">
-          <span>버튼 순번</span>
-          <input id="target-index" name="targetIndex" type="number" min="1" step="1" value="1" required>
-        </label>
+        <section id="text-mode-fields" class="mode-panel">
+          <label class="field">
+            <span>버튼명</span>
+            <input id="button-text" name="buttonText" type="text" autocomplete="off">
+          </label>
+
+          <label class="field">
+            <span>버튼 순번</span>
+            <input id="target-index" name="targetIndex" type="number" min="1" step="1" value="1">
+          </label>
+        </section>
+
+        <section id="selected-mode-fields" class="mode-panel hidden">
+          <button id="select-button" type="button" class="secondary wide">브라우저에서 선택</button>
+          <p id="selected-target" class="selected-target">선택된 버튼 없음</p>
+        </section>
 
         <div class="actions">
           <button type="submit">예약 실행</button>
