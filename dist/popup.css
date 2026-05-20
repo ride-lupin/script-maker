@@ -1,0 +1,116 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1f2933;
+  background: #f7f8fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 340px;
+  margin: 0;
+  background: #f7f8fa;
+}
+
+.popup {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.datetime-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #c8d0d9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 400;
+  color: #1f2933;
+  background: #ffffff;
+}
+
+input:focus {
+  border-color: #1677c7;
+  outline: 2px solid rgba(22, 119, 199, 0.2);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid #0f5f9f;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background: #1677c7;
+  cursor: pointer;
+}
+
+button.secondary {
+  border-color: #b8c1cc;
+  color: #263442;
+  background: #ffffff;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.status {
+  border-top: 1px solid #dbe1e8;
+  padding-top: 12px;
+}
+
+.status h1 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 6px 8px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+dt {
+  color: #596673;
+  font-weight: 600;
+}
+
+dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
