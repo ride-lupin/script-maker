@@ -5,6 +5,7 @@ const SELECTED_TARGET_KEY = "reservedClickSelectedTarget";
 const form = document.querySelector("#schedule-form");
 const targetDateInput = document.querySelector("#target-date");
 const targetTimeInput = document.querySelector("#target-time");
+const targetMillisecondInput = document.querySelector("#target-millisecond");
 const selectButton = document.querySelector("#select-button");
 const selectedTarget = document.querySelector("#selected-target");
 const cancelButton = document.querySelector("#cancel-button");
@@ -14,7 +15,8 @@ const currentTimeValue = document.querySelector("#current-time-value");
 
 const MAX_SERVER_TIME_DRIFT_MS = 10 * 60 * 1000;
 const DATE_HEADER_PRECISION_OFFSET_MS = 500;
-const CLOCK_RENDER_DELAY_MS = 20;
+const CLOCK_RENDER_INTERVAL_MS = 50;
+const ALLOWED_TARGET_MILLISECONDS = [800, 850, 900, 950];
 
 let currentTimeTimerId;
 let serverTimeOffset = 0;
@@ -227,9 +229,7 @@ function stopCurrentTimeClock() {
 
 function scheduleCurrentTimeTick() {
   renderCurrentTime();
-
-  const millisecondsUntilNextSecond = 1000 - (getCurrentTime().getTime() % 1000);
-  currentTimeTimerId = window.setTimeout(scheduleCurrentTimeTick, millisecondsUntilNextSecond + CLOCK_RENDER_DELAY_MS);
+  currentTimeTimerId = window.setTimeout(scheduleCurrentTimeTick, CLOCK_RENDER_INTERVAL_MS);
 }
 
 async function refreshServerTime() {
@@ -297,21 +297,74 @@ function renderSelectedTarget(target) {
 function buildTargetAt() {
   const date = targetDateInput.value.trim();
   const time = normalizeTimeValue(targetTimeInput.value.trim());
+  const millisecond = normalizeMillisecondValue(targetMillisecondInput.value.trim());
 
-  if (!date || !time) return "";
-  return `${date} ${time}`;
+  if (!date || !time || !millisecond) return "";
+  return `${date} ${time}.${millisecond}`;
 }
 
 function setCurrentDateTime() {
-  const now = getCurrentTime();
-  targetDateInput.value = formatDateInput(now);
-  targetTimeInput.value = formatTimeInput(now);
+  const defaultTargetDate = roundUpToAllowedTargetMillisecond(getCurrentTime());
+  targetDateInput.value = formatDateInput(defaultTargetDate);
+  targetTimeInput.value = formatTimeInput(defaultTargetDate);
+  targetMillisecondInput.value = formatMillisecondInput(defaultTargetDate);
 }
 
 function normalizeTimeValue(value) {
-  if (/^\d{2}:\d{2}$/.test(value)) return `${value}:00`;
-  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value;
-  return "";
+  const match = value.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return "";
+
+  const [, hour, minute, second = "00"] = match;
+  const numericHour = Number(hour);
+  const numericMinute = Number(minute);
+  const numericSecond = Number(second);
+
+  if (
+    numericHour > 23 ||
+    numericMinute > 59 ||
+    numericSecond > 59
+  ) {
+    return "";
+  }
+
+  return `${hour}:${minute}:${second}`;
+}
+
+function normalizeMillisecondValue(value) {
+  if (!/^\d{3}$/.test(value)) return "";
+  const millisecond = Number(value);
+  if (!ALLOWED_TARGET_MILLISECONDS.includes(millisecond)) return "";
+  return value;
+}
+
+function roundUpToAllowedTargetMillisecond(date) {
+  const normalized = new Date(date.getTime());
+  const currentMillisecond = normalized.getMilliseconds();
+  const nextMillisecond = ALLOWED_TARGET_MILLISECONDS.find((millisecond) => currentMillisecond <= millisecond);
+
+  if (nextMillisecond === undefined) {
+    normalized.setSeconds(normalized.getSeconds() + 1, ALLOWED_TARGET_MILLISECONDS[0]);
+    return normalized;
+  }
+
+  normalized.setMilliseconds(nextMillisecond);
+  return normalized;
+}
+
+function parseDateTimeParts(value) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/);
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute, second, millisecond = "000"] = match;
+  return {
+    year: Number(year),
+    month: Number(month),
+    day: Number(day),
+    hour: Number(hour),
+    minute: Number(minute),
+    second: Number(second),
+    millisecond: Number(millisecond)
+  };
 }
 
 function formatDateInput(date) {
@@ -332,8 +385,12 @@ function formatTimeInput(date) {
   ].join(":");
 }
 
+function formatMillisecondInput(date) {
+  return getKoreanDateTimeParts(date).millisecond;
+}
+
 function formatLocalDateTimeForDisplay(date) {
-  return `${formatDateInput(date)} ${formatTimeInput(date)}`;
+  return `${formatDateInput(date)} ${formatTimeInput(date)}.${formatMillisecondInput(date)}`;
 }
 
 function getKoreanDateTimeParts(date) {
@@ -346,16 +403,17 @@ function getKoreanDateTimeParts(date) {
     day: pad(koreanTime.getUTCDate()),
     hour: pad(koreanTime.getUTCHours()),
     minute: pad(koreanTime.getUTCMinutes()),
-    second: pad(koreanTime.getUTCSeconds())
+    second: pad(koreanTime.getUTCSeconds()),
+    millisecond: String(koreanTime.getUTCMilliseconds()).padStart(3, "0")
   };
 }
 
 function parseKoreanDateTime(value) {
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
-  if (!match) return null;
+  const partsToParse = parseDateTimeParts(value);
+  if (!partsToParse) return null;
 
-  const [, year, month, day, hour, minute, second] = match.map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day, hour - 9, minute, second));
+  const { year, month, day, hour, minute, second, millisecond } = partsToParse;
+  const date = new Date(Date.UTC(year, month - 1, day, hour - 9, minute, second, millisecond));
   const parts = getKoreanDateTimeParts(date);
 
   if (
@@ -364,7 +422,8 @@ function parseKoreanDateTime(value) {
     Number(parts.day) !== day ||
     Number(parts.hour) !== hour ||
     Number(parts.minute) !== minute ||
-    Number(parts.second) !== second
+    Number(parts.second) !== second ||
+    Number(parts.millisecond) !== millisecond
   ) {
     return null;
   }
@@ -684,8 +743,9 @@ function installReservedClick(schedule, keys) {
   }
 
   function parseKoreanDateTimeInInjectedPage(value) {
-    const [, year, month, day, hour, minute, second] = value.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/).map(Number);
-    return new Date(Date.UTC(year, month - 1, day, hour - 9, minute, second));
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?$/);
+    const [, year, month, day, hour, minute, second, millisecond = "000"] = match;
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour) - 9, Number(minute), Number(second), Number(millisecond)));
   }
 
   function formatKoreanDateTimeInInjectedPage(date) {
@@ -700,7 +760,7 @@ function installReservedClick(schedule, keys) {
       pad(koreanTime.getUTCHours()),
       pad(koreanTime.getUTCMinutes()),
       pad(koreanTime.getUTCSeconds())
-    ].join(":");
+    ].join(":") + `.${String(koreanTime.getUTCMilliseconds()).padStart(3, "0")}`;
   }
 
   function currentScheduleDate() {

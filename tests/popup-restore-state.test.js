@@ -107,6 +107,7 @@ async function main() {
 
   assert.strictEqual(elements.get("#target-date").value, "2026-05-20");
   assert.strictEqual(elements.get("#target-time").value, "11:15:30");
+  assert.strictEqual(elements.get("#target-millisecond").value, "800");
 }
 
 main()

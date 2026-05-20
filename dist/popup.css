@@ -10,7 +10,7 @@
 }
 
 body {
-  width: 340px;
+  width: 360px;
   margin: 0;
   background: #f7f8fa;
 }
@@ -61,12 +61,17 @@ body {
   gap: 8px;
 }
 
+.datetime-fields .field:last-child {
+  width: 88px;
+}
+
 .mode-panel {
   display: grid;
   gap: 12px;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 38px;
   border: 1px solid #c8d0d9;
@@ -78,7 +83,8 @@ input {
   background: #ffffff;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: #1677c7;
   outline: 2px solid rgba(22, 119, 199, 0.2);
 }
