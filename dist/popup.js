@@ -16,7 +16,7 @@ const currentTimeValue = document.querySelector("#current-time-value");
 const MAX_SERVER_TIME_DRIFT_MS = 10 * 60 * 1000;
 const DATE_HEADER_PRECISION_OFFSET_MS = 500;
 const CLOCK_RENDER_INTERVAL_MS = 50;
-const ALLOWED_TARGET_MILLISECONDS = [800, 850, 900, 950];
+const ALLOWED_TARGET_MILLISECONDS = [0, 800, 850, 900, 950];
 
 let currentTimeTimerId;
 let serverTimeOffset = 0;
@@ -340,7 +340,7 @@ function normalizeMillisecondValue(value) {
 function roundUpToAllowedTargetMillisecond(date) {
   const normalized = new Date(date.getTime());
   const currentMillisecond = normalized.getMilliseconds();
-  const nextMillisecond = ALLOWED_TARGET_MILLISECONDS.find((millisecond) => currentMillisecond <= millisecond);
+  const nextMillisecond = ALLOWED_TARGET_MILLISECONDS.find((millisecond) => currentMillisecond < millisecond);
 
   if (nextMillisecond === undefined) {
     normalized.setSeconds(normalized.getSeconds() + 1, ALLOWED_TARGET_MILLISECONDS[0]);

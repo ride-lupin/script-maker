@@ -65,11 +65,12 @@ assert(
 
 assert(
   popupHtml.includes('id="target-millisecond"') &&
+    popupHtml.includes('<option value="000">000</option>') &&
     popupHtml.includes('<option value="800">800</option>') &&
     popupHtml.includes('<option value="850">850</option>') &&
     popupHtml.includes('<option value="900">900</option>') &&
     popupHtml.includes('<option value="950">950</option>'),
-  "millisecond input must offer only 800, 850, 900, and 950"
+  "millisecond input must offer only 000, 800, 850, 900, and 950"
 );
 
 assert(
@@ -78,6 +79,7 @@ assert(
 );
 
 assert.strictEqual(context.normalizeTimeValue("08:59:59"), "08:59:59");
+assert.strictEqual(context.normalizeMillisecondValue("000"), "000");
 assert.strictEqual(context.normalizeMillisecondValue("800"), "800");
 assert.strictEqual(context.normalizeMillisecondValue("850"), "850");
 assert.strictEqual(context.normalizeMillisecondValue("900"), "900");
