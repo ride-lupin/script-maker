@@ -46,11 +46,7 @@ async function restoreState() {
     [SELECTED_TARGET_KEY]: selected
   } = await chrome.storage.local.get([STATUS_KEY, SCHEDULE_KEY, SELECTED_TARGET_KEY]);
 
-  if (schedule) {
-    restoreDateTime(schedule.targetAt);
-  } else {
-    setCurrentDateTime();
-  }
+  setCurrentDateTime();
 
   renderSelectedTarget(selected);
   renderStatus(status ?? { state: "idle" });
@@ -310,16 +306,6 @@ function setCurrentDateTime() {
   const now = getCurrentTime();
   targetDateInput.value = formatDateInput(now);
   targetTimeInput.value = formatTimeInput(now);
-}
-
-function restoreDateTime(targetAt) {
-  if (typeof targetAt !== "string") return;
-
-  const match = targetAt.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})(?::(\d{2}))?$/);
-  if (!match) return;
-
-  targetDateInput.value = match[1];
-  targetTimeInput.value = `${match[2]}:${match[3] ?? "00"}`;
 }
 
 function normalizeTimeValue(value) {

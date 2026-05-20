@@ -37,7 +37,7 @@ button, a, input[type='button'], input[type='submit'], [role='button']
 - `failed`: 시간이 지났거나 버튼을 못 찾음
 - `cancelled`: 사용자가 예약 취소
 
-팝업을 닫았다 다시 열어도 마지막 상태는 `chrome.storage.local`에 저장되어 표시됩니다.
+팝업을 닫았다 다시 열어도 마지막 상태는 `chrome.storage.local`에 저장되어 표시됩니다. 날짜/시간 입력값은 저장된 예약이 있더라도 팝업을 새로 열 때마다 현재 시각으로 다시 채웁니다.
 
 ## 테스트
 
