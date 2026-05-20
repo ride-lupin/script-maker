@@ -48,7 +48,7 @@ async function restoreState() {
     [SELECTED_TARGET_KEY]: selected
   } = await chrome.storage.local.get([STATUS_KEY, SCHEDULE_KEY, SELECTED_TARGET_KEY]);
 
-  setCurrentDateTime();
+  setCurrentDateTime(schedule);
 
   renderSelectedTarget(selected);
   renderStatus(status ?? { state: "idle" });
@@ -303,11 +303,11 @@ function buildTargetAt() {
   return `${date} ${time}.${millisecond}`;
 }
 
-function setCurrentDateTime() {
+function setCurrentDateTime(schedule) {
   const defaultTargetDate = roundUpToAllowedTargetMillisecond(getCurrentTime());
   targetDateInput.value = formatDateInput(defaultTargetDate);
   targetTimeInput.value = formatTimeInput(defaultTargetDate);
-  targetMillisecondInput.value = formatMillisecondInput(defaultTargetDate);
+  targetMillisecondInput.value = resolveInitialMillisecond(schedule);
 }
 
 function normalizeTimeValue(value) {
@@ -335,6 +335,15 @@ function normalizeMillisecondValue(value) {
   const millisecond = Number(value);
   if (!ALLOWED_TARGET_MILLISECONDS.includes(millisecond)) return "";
   return value;
+}
+
+function resolveInitialMillisecond(schedule) {
+  const scheduledMillisecond = parseDateTimeParts(schedule?.targetAt ?? "")?.millisecond;
+  if (Number.isInteger(scheduledMillisecond)) {
+    return normalizeMillisecondValue(String(scheduledMillisecond).padStart(3, "0")) || "000";
+  }
+
+  return "000";
 }
 
 function roundUpToAllowedTargetMillisecond(date) {

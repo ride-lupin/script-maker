@@ -32,11 +32,11 @@ const document = {
 const fixedNow = Date.UTC(2026, 4, 20, 2, 15, 30);
 const storage = {
   reservedClickSchedule: {
-    targetAt: "2099-12-31 23:59:59"
+    targetAt: "2099-12-31 23:59:59.950"
   },
   reservedClickStatus: {
     state: "scheduled",
-    scheduledFor: "2099-12-31 23:59:59"
+    scheduledFor: "2099-12-31 23:59:59.950"
   }
 };
 
@@ -107,7 +107,14 @@ async function main() {
 
   assert.strictEqual(elements.get("#target-date").value, "2026-05-20");
   assert.strictEqual(elements.get("#target-time").value, "11:15:30");
-  assert.strictEqual(elements.get("#target-millisecond").value, "800");
+  assert.strictEqual(elements.get("#target-millisecond").value, "950");
+
+  delete storage.reservedClickSchedule;
+  await document.restoreState();
+
+  assert.strictEqual(elements.get("#target-date").value, "2026-05-20");
+  assert.strictEqual(elements.get("#target-time").value, "11:15:30");
+  assert.strictEqual(elements.get("#target-millisecond").value, "000");
 }
 
 main()
