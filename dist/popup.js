@@ -690,10 +690,21 @@ function installButtonPicker(keys) {
 }
 
 function installReservedClick(schedule, keys) {
+  const WATCH_LEAD_TIME_MS = 1000;
+  const WATCH_INTERVAL_MS = 10;
+  const WATCH_TIMEOUT_MS = 5000;
+
   function clearTimer() {
     if (window.__reservedClickTimerId) {
       window.clearTimeout(window.__reservedClickTimerId);
       window.__reservedClickTimerId = undefined;
+    }
+  }
+
+  function clearWatchInterval() {
+    if (window.__reservedClickWatchIntervalId) {
+      window.clearInterval(window.__reservedClickWatchIntervalId);
+      window.__reservedClickWatchIntervalId = undefined;
     }
   }
 
@@ -756,6 +767,18 @@ function installReservedClick(schedule, keys) {
     return null;
   }
 
+  function isClickable(element) {
+    if (!element || !isVisible(element)) return false;
+
+    const style = window.getComputedStyle(element);
+
+    return (
+      element.disabled !== true &&
+      element.getAttribute("aria-disabled") !== "true" &&
+      style.pointerEvents !== "none"
+    );
+  }
+
   function countMatchesForSchedule() {
     if (schedule.selectedTarget?.buttonText) {
       return findCandidates(schedule.selectedTarget.buttonText).length;
@@ -799,8 +822,11 @@ function installReservedClick(schedule, keys) {
 
   const targetTime = parseKoreanDateTimeInInjectedPage(schedule.targetAt).getTime();
   const delay = targetTime - currentScheduleDate().getTime();
+  const watchStartDelay = Math.max(0, delay - WATCH_LEAD_TIME_MS);
+  const watchDeadline = targetTime + WATCH_TIMEOUT_MS;
 
   clearTimer();
+  clearWatchInterval();
   removeStorageListener();
 
   if (delay <= 0) {
@@ -821,6 +847,7 @@ function installReservedClick(schedule, keys) {
     const nextStatus = changes[keys.statusKey]?.newValue;
     if (nextStatus?.state === "cancelled") {
       clearTimer();
+      clearWatchInterval();
       removeStorageListener();
     }
   };
@@ -828,43 +855,68 @@ function installReservedClick(schedule, keys) {
   chrome.storage.onChanged.addListener(window.__reservedClickStorageListener);
 
   window.__reservedClickTimerId = window.setTimeout(() => {
-    removeStorageListener();
-    const target = findSelectedTarget(schedule.selectedTarget);
-    const matchedCount = countMatchesForSchedule();
+    let completed = false;
+    window.__reservedClickTimerId = undefined;
 
-    if (!target) {
-      writeStatus({
-        state: "failed",
-        scheduledFor: schedule.targetAt,
-        clickedAt: formatKoreanDateTimeInInjectedPage(currentScheduleDate()),
-        buttonText: schedule.buttonText,
-        targetIndex: Number.isInteger(schedule.targetIndex) ? schedule.targetIndex + 1 : undefined,
-        selector: schedule.selectedTarget?.selector,
-        matchedCount,
-        error: "선택한 버튼을 찾지 못했습니다."
-      });
-      return;
+    function finish(status) {
+      completed = true;
+      clearWatchInterval();
+      removeStorageListener();
+      writeStatus(status);
     }
 
-    target.scrollIntoView({ block: "center", inline: "center" });
-    target.click();
+    function checkAndClick() {
+      const target = findSelectedTarget(schedule.selectedTarget);
+      const matchedCount = countMatchesForSchedule();
+      const now = currentScheduleDate().getTime();
 
-    writeStatus({
-      state: "clicked",
-      scheduledFor: schedule.targetAt,
-      clickedAt: formatKoreanDateTimeInInjectedPage(currentScheduleDate()),
-      buttonText: schedule.buttonText,
-      targetIndex: Number.isInteger(schedule.targetIndex) ? schedule.targetIndex + 1 : undefined,
-      selector: schedule.selectedTarget?.selector,
-      matchedCount
-    });
-  }, delay);
+      if (now >= targetTime && isClickable(target)) {
+        target.scrollIntoView({ block: "center", inline: "center" });
+        target.click();
+
+        finish({
+          state: "clicked",
+          scheduledFor: schedule.targetAt,
+          clickedAt: formatKoreanDateTimeInInjectedPage(currentScheduleDate()),
+          buttonText: schedule.buttonText,
+          targetIndex: Number.isInteger(schedule.targetIndex) ? schedule.targetIndex + 1 : undefined,
+          selector: schedule.selectedTarget?.selector,
+          matchedCount
+        });
+        return;
+      }
+
+      if (now > watchDeadline) {
+        finish({
+          state: "failed",
+          scheduledFor: schedule.targetAt,
+          clickedAt: formatKoreanDateTimeInInjectedPage(currentScheduleDate()),
+          buttonText: schedule.buttonText,
+          targetIndex: Number.isInteger(schedule.targetIndex) ? schedule.targetIndex + 1 : undefined,
+          selector: schedule.selectedTarget?.selector,
+          matchedCount,
+          error: target ? "선택한 버튼이 클릭 가능한 상태가 되지 않았습니다." : "선택한 버튼을 찾지 못했습니다."
+        });
+      }
+    }
+
+    checkAndClick();
+
+    if (!completed && !window.__reservedClickWatchIntervalId) {
+      window.__reservedClickWatchIntervalId = window.setInterval(checkAndClick, WATCH_INTERVAL_MS);
+    }
+  }, watchStartDelay);
 }
 
 function cancelReservedClick() {
   if (window.__reservedClickTimerId) {
     window.clearTimeout(window.__reservedClickTimerId);
     window.__reservedClickTimerId = undefined;
+  }
+
+  if (window.__reservedClickWatchIntervalId) {
+    window.clearInterval(window.__reservedClickWatchIntervalId);
+    window.__reservedClickWatchIntervalId = undefined;
   }
 
   if (window.__reservedClickStorageListener) {
