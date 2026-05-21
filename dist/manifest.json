@@ -3,9 +3,21 @@
   "name": "Reserved Click MVP",
   "description": "Schedule a click on a matching button in the current tab.",
   "version": "0.1.0",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Reserved Click"
+  },
+  "commands": {
+    "open-reserved-click": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Open Reserved Click"
+    }
   }
 }

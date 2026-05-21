@@ -1,6 +1,8 @@
 const STATUS_KEY = "reservedClickStatus";
 const SCHEDULE_KEY = "reservedClickSchedule";
 const SELECTED_TARGET_KEY = "reservedClickSelectedTarget";
+const TARGET_CONTEXT_KEY = "reservedClickTargetContext";
+const USE_STORED_TARGET_CONTEXT = (window.location?.search ?? "").split(/[?&]/).includes("target=stored");
 
 const form = document.querySelector("#schedule-form");
 const targetDateInput = document.querySelector("#target-date");
@@ -96,7 +98,7 @@ async function scheduleClick(event) {
   renderStatus(status);
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = await getTargetTab();
     if (!tab?.id) throw new Error("현재 탭을 찾을 수 없습니다.");
 
     await chrome.scripting.executeScript({
@@ -135,7 +137,7 @@ async function buildSchedule(targetAt) {
 
 async function startBrowserSelection() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = await getTargetTab();
     if (!tab?.id) throw new Error("현재 탭을 찾을 수 없습니다.");
 
     await chrome.scripting.executeScript({
@@ -161,7 +163,7 @@ async function cancelSchedule() {
   renderStatus(status);
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = await getTargetTab();
     if (!tab?.id) return;
 
     await chrome.scripting.executeScript({
@@ -234,7 +236,7 @@ function scheduleCurrentTimeTick() {
 
 async function refreshServerTime() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = await getTargetTab();
     if (!tab?.id) throw new Error("현재 탭을 찾을 수 없습니다.");
 
     const [result] = await chrome.scripting.executeScript({
@@ -257,6 +259,25 @@ async function refreshServerTime() {
 
   stopCurrentTimeClock();
   scheduleCurrentTimeTick();
+}
+
+async function getTargetTab() {
+  if (USE_STORED_TARGET_CONTEXT) {
+    const { [TARGET_CONTEXT_KEY]: targetContext } = await chrome.storage.local.get(TARGET_CONTEXT_KEY);
+
+    if (targetContext?.tabId) {
+      try {
+        const tab = await chrome.tabs.get(targetContext.tabId);
+        if (tab?.id && !tab.url?.startsWith("chrome-extension://")) return tab;
+      } catch {
+        await chrome.storage.local.remove(TARGET_CONTEXT_KEY);
+      }
+    }
+  }
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id && !tab.url?.startsWith("chrome-extension://")) return tab;
+  return undefined;
 }
 
 function getCurrentTime() {
